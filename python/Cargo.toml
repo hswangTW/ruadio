@@ -1,0 +1,8 @@
+[package]
+name = "rustafx-python"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+
+[dependencies]
+pyo3 = { version = "0.23.3", features = ["extension-module"] }
