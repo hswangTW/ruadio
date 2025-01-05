@@ -28,3 +28,9 @@ pub struct SecondOrderSection {
 pub struct SosCoeffs {
     pub(crate) sections: Vec<SecondOrderSection>,
 }
+
+impl FirCoeffs {
+    pub fn new(coeffs: Vec<f32>) -> Self {
+        Self { b: coeffs }
+    }
+}

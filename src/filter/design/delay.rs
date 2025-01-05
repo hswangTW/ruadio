@@ -52,6 +52,8 @@ pub fn linear_interpolation(delay: f32) -> FirCoeffs {
     FirCoeffs { b: coeffs }
 }
 
+// TODO Replace the window type with a enum
+
 /// Delay filter design using (windowed) sinc interpolation.
 ///
 /// This delay filter is composed of a normal integer delay (delta function) and a fractional
