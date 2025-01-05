@@ -1,0 +1,14 @@
+[tool.maturin]
+python-source = "."
+
+[build-system]
+requires = ["maturin>=1.0,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "rustafx"
+description = "Audio effect library built on Rust and Python"
+authors = [
+  { name = "Han-Sheng Wang", email = "hanson2693@gmail.com" },
+]
+dynamic = ["version"]
