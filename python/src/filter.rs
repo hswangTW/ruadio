@@ -2,6 +2,7 @@ use pyo3::prelude::*;
 use numpy::{
     PyReadonlyArray1,
     PyArray1,
+    PyArrayMethods,
     ToPyArray,
 };
 
@@ -10,6 +11,8 @@ use rustafx::filter::{
     LinearInterpDelay,
     SincInterpDelay,
 };
+
+use crate::utilities::convert_to_f32_array;
 
 #[pymodule(name = "filter")]
 pub mod py_filter {
@@ -30,8 +33,17 @@ pub mod py_filter {
             Self { filter: LinearInterpDelay::new(delay) }
         }
 
-        fn process<'py>(&mut self, py: Python<'py>, input: PyReadonlyArray1<f32>) -> PyResult<Bound<'py, PyArray1<f32>>> {
-            let input: &[f32] = input.as_slice().unwrap();
+        fn process<'py>(&mut self, py: Python<'py>, input: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyArray1<f32>>> {
+            if let Ok(input_array) = input.downcast::<PyArray1<f32>>() {
+                // The input can be directly read as an f32 array (no copy/conversion needed)
+                let input_array: PyReadonlyArray1<f32> = input_array.try_readonly().unwrap();
+                let input: &[f32] = input_array.as_slice().unwrap();
+                let output = self.filter.process(input);
+                return Ok(output.to_pyarray(py));
+            }
+
+            let input_array = convert_to_f32_array(input)?;
+            let input: &[f32] = input_array.as_slice().unwrap();
             let output = self.filter.process(input);
             Ok(output.to_pyarray(py))
         }
@@ -54,8 +66,17 @@ pub mod py_filter {
             Self { filter: SincInterpDelay::new(delay, sinc_half_width, window_type) }
         }
 
-        fn process<'py>(&mut self, py: Python<'py>, input: PyReadonlyArray1<f32>) -> PyResult<Bound<'py, PyArray1<f32>>> {
-            let input: &[f32] = input.as_slice().unwrap();
+        fn process<'py>(&mut self, py: Python<'py>, input: Bound<'py, PyAny>) -> PyResult<Bound<'py, PyArray1<f32>>> {
+            if let Ok(input_array) = input.downcast::<PyArray1<f32>>() {
+                // The input can be directly read as an f32 array (no copy/conversion needed)
+                let input_array: PyReadonlyArray1<f32> = input_array.try_readonly().unwrap();
+                let input: &[f32] = input_array.as_slice().unwrap();
+                let output = self.filter.process(input);
+                return Ok(output.to_pyarray(py));
+            }
+
+            let input_array = convert_to_f32_array(input)?;
+            let input: &[f32] = input_array.as_slice().unwrap();
             let output = self.filter.process(input);
             Ok(output.to_pyarray(py))
         }

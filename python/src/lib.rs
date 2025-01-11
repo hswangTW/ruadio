@@ -1,6 +1,7 @@
 use pyo3::prelude::*;
 
 mod filter;
+mod utilities;
 
 #[pymodule(name = "rustafx")]
 mod py_rustafx {
