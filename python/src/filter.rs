@@ -23,9 +23,6 @@ pub mod py_filter {
         filter: LinearInterpDelay,
     }
 
-
-    // TODO Make the methods accept more different dtypes
-
     #[pymethods]
     impl PyLinearInterpDelay {
         #[new]

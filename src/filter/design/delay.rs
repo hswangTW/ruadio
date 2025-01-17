@@ -124,7 +124,7 @@ pub fn sinc_interpolation(delay: f32, sinc_half_width: Option<usize>, window: Op
 
 /// Fractional delay filter that introduces a delay of `sinc_half_width + frac_delay` samples.
 fn sinc_fractional_delay(sinc_half_width: usize, frac_delay: f32, window: Option<&str>) -> Vec<f32> {
-    assert!(frac_delay >= -0.5 && frac_delay <= 0.5, "The fractional delay must be in the range [-0.5, 0.5]");
+    assert!((-0.5..=0.5).contains(&frac_delay), "The fractional delay must be in the range [-0.5, 0.5]");
     let sinc_width = sinc_half_width * 2 + 1;
 
     // Determine the window function

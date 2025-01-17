@@ -7,7 +7,7 @@ use numpy::{
 };
 use numpy::ndarray::Array1;
 
-pub fn convert_to_f32_array<'py>(obj: Bound<'py, PyAny>) -> PyResult<Array1<f32>> {
+pub fn convert_to_f32_array(obj: Bound<'_, PyAny>) -> PyResult<Array1<f32>> {
     if let Ok(array) = obj.downcast::<PyArray1<f32>>() {
         Ok(array.to_owned_array())
     } else if let Ok(array) = obj.downcast::<PyArray1<f64>>() {

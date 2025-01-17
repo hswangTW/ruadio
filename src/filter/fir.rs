@@ -16,25 +16,27 @@ impl Filter for FirFilter {
         let b = &self.coeffs.b;
         let buffer_mask = self.buffer.len() - 1; // For wrapping around the buffer index
 
-        for n in 0..buffer.len() {
-            // Push the new sample into the buffer
-            self.buffer[self.buffer_index] = buffer[n];
+        buffer.iter_mut().for_each(|sample| {
+            // Push the new sample into the filter buffer
+            self.buffer[self.buffer_index] = *sample;
 
-            // Compute the output
-            let mut y = 0.0;
-            let mut idx = self.buffer_index;
-            for coeff in b.iter() {
-                y += coeff * self.buffer[idx];
-                idx = (idx + buffer_mask) & buffer_mask; // Wrap around (idx - 1)
-            }
+            // Compute the filter output
+            let buffer_len = self.buffer.len();
+            let y = b.iter()
+                .enumerate()
+                .map(|(i, &coeff)| {
+                    let idx = (self.buffer_index + (buffer_len - i)) & buffer_mask;
+                    coeff * self.buffer[idx] // b[i] * x[n - i]
+                })
+                .sum();
 
-            buffer[n] = y;
+            *sample = y;
             self.buffer_index = (self.buffer_index + 1) & buffer_mask;
-        }
+        });
     }
 
-    fn process(&mut self, buffer: &[f32]) -> Vec<f32> {
-        let mut output = buffer.to_vec();
+    fn process(&mut self, input: &[f32]) -> Vec<f32> {
+        let mut output = input.to_vec();
         self.process_inplace(&mut output);
         output
     }
