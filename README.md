@@ -6,7 +6,7 @@ A Rust library for audio effects and processing with Python bindings. Not yet re
 
 ### Filters
 
-- [x] Delay filters (arbitrary real-valued delay)
+- [x] Delay filters (capable of non-integer delay)
 
 ### Effects
 

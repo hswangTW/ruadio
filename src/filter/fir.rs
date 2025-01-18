@@ -1,6 +1,9 @@
+//! General-purpose FIR (Finite Impulse Response) filter.
+
 use crate::filter::Filter;
 use crate::filter::design::FirCoeffs;
 
+/// General-purpose FIR (Finite Impulse Response) filter.
 pub struct FirFilter {
     coeffs: FirCoeffs,
     /// FIFO buffer for storing the input samples. The length will be restricted to powers of 2.
