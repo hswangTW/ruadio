@@ -4,4 +4,6 @@
 //! bindings are also provided, but not all the Rust features are available in Python.
 
 pub mod filter;
+pub mod effects;
+pub mod buffer_view;
 mod utilities;
