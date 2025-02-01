@@ -1,11 +1,13 @@
-//! Delay effects, or you can also call it echo effects. The main difference from the delay filters
-//! includes that the delay effects are optimized for varying delay amount during runtime, they
-//! accept stereo input/output, and they may also have more features, e.g. feedback, mix, etc.
+//! Delay effects, or you can also call it echo effects. Different from the delay filters, the
+//! delay effects are optimized for varying delay amount during runtime, and they may have many
+//! other features like feedback, mix, etc.
 
 use crate::buffer_view::BufferViewMut;
 use crate::effects::Effect;
 
 const MAX_DELAY_TIME: f32 = 1000.0; // ms
+
+const DELAY_TIME_SMOOTHING: f32 = 10.0; // ms
 
 const DEFAULT_DELAY_TIME: f32 = 100.0; // ms
 const DEFAULT_FEEDBACK: f32 = 0.2;
@@ -14,6 +16,9 @@ const DEFAULT_WET_GAIN: f32 = 0.25; // 25% = -12 dB
 
 /// A simple digital delay effect with feedback and dry/wet gain. Linear interpolation is used for
 /// the delay line, and there is no cross-talk between the channels. The channel number is not limited.
+///
+/// Although it is called digital delay, because of the lowpass characteristics of the linear
+/// interpolation, the echoes will get a little darker over time.
 pub struct DigitalDelay {
     // Parameters
     sample_rate: f32,
@@ -23,10 +28,13 @@ pub struct DigitalDelay {
     wet_gain: f32,
 
     // Dependent parameters
-    /// The integer part of the delay in samples.
-    delay_int: usize,
-    /// The fractional part of the delay in samples.
-    delay_frac: f32,
+    sample_rate_per_ms: f32,
+    /// The delay time in samples.
+    delay_samples: f32,
+    /// The smoothing factor for the delay time.
+    smoothing_factor: f32,
+    /// The smoothed delay time in samples.
+    smoothed_delay_samples: f32,
 
     // Internal states
     delay_lines: Vec<Vec<f32>>,
@@ -40,71 +48,89 @@ impl Effect for DigitalDelay {
         self.sample_rate = sample_rate;
 
         // Update the dependent parameters
-        let delay_samples: f32 = self.delay_time * sample_rate / 1000.0;
-        self.delay_int = delay_samples.floor() as usize;
-        self.delay_frac = delay_samples - self.delay_int as f32;
+        self.sample_rate_per_ms = sample_rate / 1000.0;
+        self.delay_samples = self.delay_time * self.sample_rate_per_ms;
+        self.smoothing_factor = (-1.0 * DELAY_TIME_SMOOTHING * self.sample_rate_per_ms)
+            .recip()
+            .exp();
+        self.smoothed_delay_samples = self.delay_samples;
 
         // Update the internal states
         self.reset();
-        let max_delay_samples = (MAX_DELAY_TIME * sample_rate / 1000.0).ceil() as usize;
+        let max_delay_samples = (MAX_DELAY_TIME * self.sample_rate_per_ms).ceil() as usize;
         self.delay_lines.iter_mut().for_each(|channel| {
             channel.resize(max_delay_samples.next_power_of_two(), 0.0);
         });
     }
 
     fn reset(&mut self) {
+        self.smoothed_delay_samples = self.delay_samples;
         self.delay_lines.iter_mut().for_each(|channel| {
             channel.fill(0.0);
         });
         self.read_index = 0;
     }
 
+    // TODO Delay time smoothing
+
     fn process_inplace<'a>(&mut self, buffer: &'a mut BufferViewMut<'a>) {
+        // Check if the effect is prepared
+        if self.sample_rate == 0.0 {
+            return;
+        }
+
+        let num_channels = buffer.num_channels();
         let num_samples = buffer.num_samples();
         let delay_line_len = self.delay_lines[0].len();
         let delay_line_mask = delay_line_len - 1;
 
-        // Iterate over each channel
-        for (ch, channel) in buffer.channels_mut().iter_mut().enumerate() {
-            let delay_line = &mut self.delay_lines[ch];
-            let mut read_index = self.read_index;
-            let mut write_index1 = read_index + self.delay_int;
-            let mut write_index2 = write_index1 + 1;
+        // Iterate over samples
+        let channels: &mut [&mut [f32]] = buffer.channels_mut();
+        debug_assert_eq!(channels.len(), num_channels);
 
-            // Iterate over each sample in the channel
-            for sample in channel.iter_mut() {
+        for n in 0..num_samples {
+            // Smooth the delay time
+            self.smoothed_delay_samples = self.delay_samples
+                + (self.smoothed_delay_samples - self.delay_samples) * self.smoothing_factor;
+            let delay_int = self.smoothed_delay_samples.floor() as usize;
+            let delay_frac = self.smoothed_delay_samples - delay_int as f32;
+            let write_index1 = (self.read_index + delay_int) & delay_line_mask;
+            let write_index2 = (write_index1 + 1) & delay_line_mask;
+
+            // Iterate over each channel
+            for (ch, channel) in channels.iter_mut().enumerate() {
                 // Read the sample from the delay line
-                let y = delay_line[read_index];
+                let y = self.delay_lines[ch][self.read_index];
+                self.delay_lines[ch][self.read_index] = 0.0;
 
                 // Write the sample to the delay line
-                let x = *sample + y * self.feedback;
-                delay_line[write_index1] = x * (1.0 - self.delay_frac);
-                delay_line[write_index2] = x * self.delay_frac;
+                let x = channel[n] + y * self.feedback;
+                self.delay_lines[ch][write_index1] += x * (1.0 - delay_frac);
+                self.delay_lines[ch][write_index2] += x * delay_frac;
 
                 // Mix the dry and wet signals
-                *sample = self.dry_gain * *sample + self.wet_gain * y;
-
-                read_index = (read_index + 1) & delay_line_mask;
-                write_index1 = (write_index1 + 1) & delay_line_mask;
-                write_index2 = (write_index2 + 1) & delay_line_mask;
+                channel[n] = self.dry_gain * channel[n] + self.wet_gain * y;
             }
-        }
 
-        // Update the read index after all channels are processed
-        self.read_index = (self.read_index + num_samples) & delay_line_mask;
+            // Update the read index
+            self.read_index = (self.read_index + 1) & delay_line_mask;
+        }
     }
 }
 
 impl DigitalDelay {
     pub fn new(num_channels: usize) -> Self {
+        assert!((1..=2).contains(&num_channels));
         Self {
             sample_rate: 0.0,
             delay_time: DEFAULT_DELAY_TIME,
             feedback: DEFAULT_FEEDBACK,
             dry_gain: DEFAULT_DRY_GAIN,
             wet_gain: DEFAULT_WET_GAIN,
-            delay_int: 0,
-            delay_frac: 0.0,
+            sample_rate_per_ms: 0.0,
+            delay_samples: 0.0,
+            smoothing_factor: 0.0,
+            smoothed_delay_samples: 0.0,
             delay_lines: vec![vec![0.0; 0]; num_channels],
             read_index: 0,
         }
@@ -113,10 +139,11 @@ impl DigitalDelay {
     pub fn set_delay_time(&mut self, delay: f32) {
         assert!(delay > 0.0);
         self.delay_time = delay;
+        self.delay_samples = delay * self.sample_rate_per_ms;
     }
 
     pub fn set_feedback(&mut self, feedback: f32) {
-        assert!((0.0..=1.0).contains(&feedback));
+        assert!(feedback >= 0.0);
         self.feedback = feedback;
     }
 
@@ -170,9 +197,10 @@ mod tests {
         delay.set_delay_time(100.0);
         delay.prepare(48000.0, 128);
 
-        // At 48kHz, 100ms delay should be 4800 samples
-        assert_eq!(delay.delay_int, 4800);
-        assert!((delay.delay_frac).abs() < 1e-6);
+        assert_eq!(delay.sample_rate_per_ms, 48.0);
+        // Delay time in samples should be 4800
+        assert_eq!(delay.delay_samples, 4800.0);
+        assert_eq!(delay.smoothed_delay_samples, 4800.0);
 
         // Delay line should be power of 2 and large enough
         let min_size = (MAX_DELAY_TIME * 48000.0 / 1000.0).ceil() as usize;

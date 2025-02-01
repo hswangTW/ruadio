@@ -6,7 +6,7 @@
 //!
 //! - Thread safety: effects are not thread-safe and should be manually protected in multi-threaded
 //!   applications.
-//! - Parameter smoothing
+//! - Parameter range checking
 //!
 //! Those features are left to the users or higher-level frameworks like `nih-plug`.
 
@@ -18,6 +18,9 @@ pub use delay::DigitalDelay;
 
 /// An effect is like a module that processes audio signals.
 pub trait Effect {
+    // TODO Allow setting channel number (with `prepare` or a new method?)
+    // TODO Sample rate, block size, channel number getters
+
     /// Prepare the effect for processing. This method must be called before processing any audio
     /// data. The expensive operations depending on the sample rate and block size, e.g. memory
     /// allocations, should be done here.
