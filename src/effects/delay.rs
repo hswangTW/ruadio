@@ -73,7 +73,10 @@ impl Effect for DigitalDelay {
 
     // TODO Delay time smoothing
 
-    fn process_inplace<'a>(&mut self, buffer: &'a mut BufferViewMut<'a>) {
+    fn process_inplace<'outer, 'inner>(
+        &mut self,
+        buffer: &'outer mut BufferViewMut<'outer, 'inner>,
+    ) {
         // Check if the effect is prepared
         if self.sample_rate == 0.0 {
             return;

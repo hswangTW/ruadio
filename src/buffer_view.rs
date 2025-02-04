@@ -3,21 +3,27 @@
 //! If this is not the case, the behavior is undefined and may lead to panics.
 
 /// A non-owning view into multi-channel audio data
+///
+/// The `'inner` lifetime is the actual lifetime of the audio data, and the `'outer` lifetime is
+/// the lifetime of the buffer view.
 #[derive(Debug)]
-pub struct BufferView<'a> {
-    channels: &'a [&'a [f32]],
+pub struct BufferView<'outer, 'inner> {
+    channels: &'outer [&'inner [f32]],
     num_samples: usize,
 }
 
 /// A mutable view into multi-channel audio data
+///
+/// The `'inner` lifetime is the actual lifetime of the audio data, and the `'outer` lifetime is
+/// the lifetime of the buffer view.
 #[derive(Debug)]
-pub struct BufferViewMut<'a> {
-    channels: &'a mut [&'a mut [f32]],
+pub struct BufferViewMut<'outer, 'inner> {
+    channels: &'outer mut [&'inner mut [f32]],
     num_samples: usize,
 }
 
-impl<'a> BufferView<'a> {
-    pub fn new(channels: &'a [&'a [f32]]) -> Self {
+impl<'outer, 'inner> BufferView<'outer, 'inner> {
+    pub fn new(channels: &'outer [&'inner [f32]]) -> Self {
         Self {
             channels,
             num_samples: channels.get(0).map_or(0, |ch| ch.len()),
@@ -32,11 +38,11 @@ impl<'a> BufferView<'a> {
         self.num_samples
     }
 
-    pub fn channel(&self, index: usize) -> &'a [f32] {
+    pub fn channel(&self, index: usize) -> &'inner [f32] {
         self.channels[index]
     }
 
-    pub fn channels(&self) -> &'a [&'a [f32]] {
+    pub fn channels(&self) -> &'outer [&'inner [f32]] {
         self.channels
     }
 
@@ -45,8 +51,8 @@ impl<'a> BufferView<'a> {
     }
 }
 
-impl<'a> BufferViewMut<'a> {
-    pub fn new(channels: &'a mut [&'a mut [f32]]) -> Self {
+impl<'outer, 'inner> BufferViewMut<'outer, 'inner> {
+    pub fn new(channels: &'outer mut [&'inner mut [f32]]) -> Self {
         let num_samples = if let Some(ch) = channels.first() {
             ch.len()
         } else {
@@ -71,7 +77,7 @@ impl<'a> BufferViewMut<'a> {
         self.channels[index]
     }
 
-    pub fn channels_mut(&'a mut self) -> &'a mut [&'a mut [f32]] {
+    pub fn channels_mut(&'outer mut self) -> &'outer mut [&'inner mut [f32]] {
         self.channels
     }
 

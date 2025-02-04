@@ -42,6 +42,8 @@ pub trait Effect {
     }
 
     /// Process the input signal in place.
-    fn process_inplace<'a>(&mut self, buffer: &'a mut BufferViewMut<'a>);
+    fn process_inplace<'outer, 'inner>(
+        &mut self,
+        buffer: &'outer mut BufferViewMut<'outer, 'inner>,
+    );
 }
-
