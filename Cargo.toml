@@ -7,13 +7,13 @@ edition = "2021"
 authors = ["Han-Sheng Wang <hanson2693@gmail.com>"]
 
 [package]
-name = "rustafx"
+name = "ruadio"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
 
 [lib]
-name = "rustafx"
+name = "ruadio"
 path = "src/lib.rs"
 
 [dependencies]

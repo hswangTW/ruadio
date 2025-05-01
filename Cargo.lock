@@ -232,7 +232,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "60a357793950651c4ed0f3f52338f53b2f809f32d83a07f72909fa13e4c6c1e3"
 
 [[package]]
-name = "rustafx"
+name = "ruadio"
 version = "0.1.0"
 dependencies = [
  "approx",
@@ -240,12 +240,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "rustafx-python"
+name = "ruadio-python"
 version = "0.1.0"
 dependencies = [
  "numpy",
  "pyo3",
- "rustafx",
+ "ruadio",
 ]
 
 [[package]]

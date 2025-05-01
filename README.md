@@ -1,4 +1,4 @@
-# rustafx
+# ruadio
 
 A Rust library for audio effects and processing with Python bindings. Not yet ready for release.
 
