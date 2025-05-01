@@ -1,0 +1,75 @@
+[config]
+default_to_workspace = false
+
+[tasks.ignore-members]
+workspace = false
+
+[tasks.clean]
+description = "Cleans the build directory."
+command = "cargo"
+args = ["clean"]
+
+[tasks.build]
+description = "Builds the Rust library and Python bindings."
+dependencies = ["build-rust", "build-python"]
+
+[tasks.clean-build]
+description = "Cleans the build directory and builds the Rust library and Python bindings."
+dependencies = ["clean", "build-rust", "build-python"]
+
+[tasks.test]
+description = "Tests the Rust library and Python bindings."
+dependencies = ["test-rust", "test-python"]
+
+[tasks.all]
+description = "Runs the default workflow."
+dependencies = [
+    "clean",
+    "build",
+    "test",
+]
+
+[tasks.rust-only]
+description = "Runs the default workflow for the Rust library only."
+dependencies = [
+    "clean",
+    "build-rust",
+    "test-rust",
+]
+
+[tasks.build-rust]
+description = "Builds the Rust library."
+command = "cargo"
+args = ["build", "--release"]
+
+[tasks.build-python]
+description = "Builds the Python bindings using Maturin."
+cwd = "python"
+install_crate = { crate_name = "maturin", binary = "maturin", test_arg = "--version" }
+command = "maturin"
+args = ["build", "--release"]
+
+[tasks.test-rust]
+description = "Tests the Rust library."
+command = "cargo"
+args = ["test"]
+
+[tasks.test-python]
+description = "Tests the Python bindings."
+dependencies = ["install-test-deps"]
+command = ".venv/bin/python"
+args = ["-m", "unittest", "python/tests/test_filter.py"]
+
+# Tasks for Python testing
+
+[tasks.create-venv]
+description = "Creates a Python virtual environment."
+command = "python"
+args = ["-m", "venv", ".venv"]
+
+[tasks.install-test-deps]
+description = "Installs Maturin and the local package with test dependencies in the Python virtual environment."
+dependencies = ["create-venv"]
+cwd = "python"
+command = "../.venv/bin/python"
+args = ["-m", "pip", "install", "maturin", ".[test]"]
