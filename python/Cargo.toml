@@ -1,15 +1,15 @@
 [package]
-name = "rustafx-python"
+name = "ruadio-python"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
 
 [lib]
-name = "rustafx"
+name = "ruadio"
 path = "src/lib.rs"
 crate-type = ["cdylib"]
 
 [dependencies]
 numpy = "^0.23.0"
 pyo3 = { version = "^0.23.0", features = ["extension-module"] }
-rustafx = { path = ".." }
+ruadio = { path = ".." }

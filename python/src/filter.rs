@@ -6,7 +6,7 @@ use numpy::{
     ToPyArray,
 };
 
-use rustafx::filter::{
+use ruadio::filter::{
     Filter,
     LinearInterpDelay,
     SincInterpDelay,

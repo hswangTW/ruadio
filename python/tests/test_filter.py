@@ -1,6 +1,6 @@
 import unittest
 import numpy as np
-from rustafx.filter import LinearInterpDelay, SincInterpDelay
+from ruadio.filter import LinearInterpDelay, SincInterpDelay
 
 class TestLinearInterpDelay(unittest.TestCase):
     def _test_process_helper(self, dtype):

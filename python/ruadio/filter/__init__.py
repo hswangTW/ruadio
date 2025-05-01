@@ -1,4 +1,4 @@
-from ..rustafx import filter as _filter
+from ..ruadio import filter as _filter
 
 __doc__ = _filter.__doc__
 __all__ = [

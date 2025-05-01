@@ -3,8 +3,8 @@ use pyo3::prelude::*;
 mod filter;
 mod utilities;
 
-#[pymodule(name = "rustafx")]
-mod py_rustafx {
+#[pymodule(name = "ruadio")]
+mod py_ruadio {
     use super::*;
 
     #[pymodule_export]
