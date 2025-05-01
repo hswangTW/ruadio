@@ -12,3 +12,6 @@ authors = [
   { name = "Han-Sheng Wang", email = "hanson2693@gmail.com" },
 ]
 dynamic = ["version"]
+
+[project.optional-dependencies]
+test = ["numpy"]
