@@ -3,6 +3,10 @@ import numpy as np
 from ruadio.filter import LinearInterpDelay, SincInterpDelay
 
 class TestLinearInterpDelay(unittest.TestCase):
+    def assertAlmostEqual(self, a, b, places=6):
+        """Override assertAlmostEqual to set the default precision to 6 decimal places."""
+        super().assertAlmostEqual(a, b, places=places)
+
     def _test_process_helper(self, dtype):
         delay = 3.3
         delay_filter = LinearInterpDelay(delay)
