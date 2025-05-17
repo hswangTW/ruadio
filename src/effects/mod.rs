@@ -12,9 +12,11 @@
 
 use crate::buffer_view::{BufferView, BufferViewMut};
 
+mod dynamics;
 mod delay;
 
 pub use delay::DigitalDelay;
+pub use dynamics::Compressor;
 
 /// An effect is like a module that processes audio signals.
 pub trait Effect {
